@@ -1,13 +1,18 @@
-import { Geist, Geist_Mono } from "next/font/google";
+// import {
+//   ClerkProvider,
+//   SignInButton,
+//   SignedIn,
+//   SignedOut,
+//   UserButton
+// } from '@clerk/nextjs'
+import {Comic_Neue} from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const comic = Comic_Neue({
+  weight: "700",
+  variable: "--font-comic-neue", // Corrected variable name
+  style: "normal",
   subsets: ["latin"],
 });
 
@@ -18,11 +23,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className="">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${comic.variable}`}
       >
+        <Providers>
         {children}
+        </Providers>
       </body>
     </html>
   );
