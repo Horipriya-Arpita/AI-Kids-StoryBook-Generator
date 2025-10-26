@@ -6,13 +6,20 @@ import { Button } from '@heroui/button';
 import Image from 'next/image';
 import logo from '../../public/logo.png';
 import { UserButton, useUser } from '@clerk/nextjs';
-
-
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+import { MdLightMode, MdDarkMode } from 'react-icons/md';
 
 function Header() {
 
     const {user, isSignedIn} = useUser();
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     
     const MenuList = [
@@ -65,6 +72,16 @@ function Header() {
 
 
         <NavbarContent justify='end'>
+          {mounted && (
+            <Button
+              isIconOnly
+              variant="light"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="text-2xl"
+            >
+              {theme === 'dark' ? <MdLightMode /> : <MdDarkMode />}
+            </Button>
+          )}
           <Link href={'/dashboard'}>
           <Button color='primary'>
             {isSignedIn?
@@ -75,7 +92,7 @@ function Header() {
           <div className='border-5 rounded-3xl border-primary flex justify-center'>
           <UserButton/>
           </div>
-          
+
         </NavbarContent>
 
         <NavbarMenu>
