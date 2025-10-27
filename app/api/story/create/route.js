@@ -20,7 +20,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
     console.log(body, "boooooooodyyyyyyy");
-    const { userId: clerkId, storySubject, storyType, ageGroup, imageType, content } = body;
+    const { userId: clerkId, storySubject, storyType, ageGroup, imageType, content, isPublic = false } = body;
 
     if (!clerkId || !storySubject || !storyType || !ageGroup || !imageType || !content) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
@@ -51,6 +51,7 @@ export async function POST(req) {
     //     ageGroup,
     //     imageType,
     //     content, // JSON format of generated story
+    //     isPublic, // Privacy setting
     //   },
     // });
 

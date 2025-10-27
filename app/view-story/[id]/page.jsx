@@ -3,12 +3,31 @@ import React, { useEffect, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import BookCoverPage from "../_components/BookCoverPage";
 import StoryPages from "../_components/StoryPages";
-import { Button } from "@heroui/button";
+import CommentSection from "@/app/_components/CommentSection";
+import { Button } from "@heroui/react";
 import { FaArrowAltCircleRight, FaArrowAltCircleLeft } from "react-icons/fa";
 
 function ViewStory({ params }) {
   const bookRef = useRef();
   const [count, setCount] = useState(0);
+  const [storyId, setStoryId] = useState(null);
+
+  // Track view count when story loads
+  useEffect(() => {
+    const unwrapParams = async () => {
+      const resolvedParams = await params;
+      setStoryId(resolvedParams.id);
+
+      // Track view for this story
+      if (resolvedParams.id) {
+        fetch(`/api/story/view/${resolvedParams.id}`, {
+          method: "POST",
+        }).catch((error) => console.error("Error tracking view:", error));
+      }
+    };
+
+    unwrapParams();
+  }, [params]);
 
   // Hardcoded story data for testing UI/UX
   const storyData = {
@@ -96,6 +115,7 @@ function ViewStory({ params }) {
               setCount(count + 1);
             }}
           >
+            
             <FaArrowAltCircleRight className="text-[50px] text-primary cursor-pointer hover:scale-110 transition-transform" />
           </div>
         )}
@@ -106,6 +126,13 @@ function ViewStory({ params }) {
           Page {count + 1} of {storyData.chapters.length + 1}
         </p>
       </div>
+
+      {/* Comments Section */}
+      {storyId && (
+        <div className="mt-16">
+          <CommentSection storyId={storyId} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,7 @@
 "use client"
 import React from 'react'
-import {  Navbar,   NavbarBrand,   NavbarContent,   NavbarItem,   NavbarMenuToggle,  NavbarMenu,  NavbarMenuItem} from "@heroui/navbar";
+import {  Navbar,   NavbarBrand,   NavbarContent,   NavbarItem,   NavbarMenuToggle,  NavbarMenu,  NavbarMenuItem, Button} from "@heroui/react";
 import Link from 'next/link';
-import { Button } from '@heroui/button';
 import Image from 'next/image';
 import logo from '../../public/logo.png';
 import { UserButton, useUser } from '@clerk/nextjs';

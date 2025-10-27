@@ -5,7 +5,8 @@ import StorySubjectInput from '../_components/StorySubjectInput'
 import StoryType from '../_components/StoryType'
 import AgeGroup from '../_components/AgeGroup'
 import ImageStyle from '../_components/ImageStyle'
-import { Button } from '@heroui/button'
+import { Button, Switch } from '@heroui/react';
+import { FaGlobe, FaLock } from 'react-icons/fa';
 import { AI_Prompt } from '../constants/prompt';
 import { chatSession } from '@/service/AIModel';
 import { content } from '@/tailwind.config';
@@ -19,6 +20,7 @@ function CreateStory() {
   const router = useRouter();
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false); // Track loading state
+  const [isPublic, setIsPublic] = useState(false); // Privacy setting
   // Update formData with userId when it loads
   useEffect(() => {
     if (userId) {
@@ -103,6 +105,7 @@ function CreateStory() {
       ageGroup,
       imageType,
       content,
+      isPublic, // Include privacy setting
     };
 
       // Update formData state with AI-generated content
@@ -166,6 +169,35 @@ function CreateStory() {
         <AgeGroup userSelection={onHandleUserSelection}/>
         {/* Story Subject */}
         <ImageStyle userSelection={onHandleUserSelection}/>
+      </div>
+
+      {/* Privacy Settings */}
+      <div className='mt-8 p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md'>
+        <h3 className='text-xl font-bold mb-4'>Privacy Settings</h3>
+        <Switch
+          isSelected={isPublic}
+          onValueChange={setIsPublic}
+          color='success'
+          size='lg'
+          thumbIcon={({ isSelected, className }) =>
+            isSelected ? (
+              <FaGlobe className={className} />
+            ) : (
+              <FaLock className={className} />
+            )
+          }
+        >
+          <div className='flex flex-col gap-1'>
+            <p className='text-base font-medium'>
+              {isPublic ? 'Make this story public' : 'Keep this story private'}
+            </p>
+            <p className='text-sm text-gray-500'>
+              {isPublic
+                ? 'Your story will be visible to everyone on the explore page'
+                : 'Only you will be able to see this story'}
+            </p>
+          </div>
+        </Switch>
       </div>
 
       <div className='flex justify-end my-10'>
