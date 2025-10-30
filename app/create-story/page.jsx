@@ -72,73 +72,37 @@ function CreateStory() {
     }
     console.log(FINAL_PROMPT); 
 
-    //AI response 
+    //AI response
     try {
-      // const result = await chatSession.sendMessage(FINAL_PROMPT);
-      // const content = result?.response?.text();
-      // // Access the AI response text
-      // console.log("AI Response:", content);
+      const result = await chatSession.sendMessage(FINAL_PROMPT);
+      const content = result?.response?.text();
+      // Access the AI response text
+      console.log("AI Response:", content);
 
-      // if (!content) {
-      //   alert("AI failed to generate content. Please try again.");
-      //   return;
-      // }
-
-
-    //const res = await fetch(`/api/story/get?id=${formData.storyId}`);
-    const storyId = "279e11fe-b7c7-4026-932d-aeed9da89cba";
-    const res = await fetch(`/api/story/get-story?id=${storyId}`);
-    const response = await res.json();
-
-    if (!response.success || !response.story) {
-      alert("Failed to fetch story. Please try again.");
-      return;
-    }
-
-    const { storySubject, storyType, ageGroup, imageType, content } = response.story;
-
-    // Update formData with fetched story details
-    const updatedFormData = {
-      userId: formData.userId,
-      storySubject,
-      storyType,
-      ageGroup,
-      imageType,
-      content,
-      isPublic, // Include privacy setting
-    };
+      if (!content) {
+        alert("AI failed to generate content. Please try again.");
+        return;
+      }
 
       // Update formData state with AI-generated content
-      //const updatedFormData = { ...formData, content };
-
-      // const res = await fetch("/api/story/create", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(updatedFormData),
-      // });
-      // const response = await res.json();
-      // console.log("Story Created:", response);
-
-      // if (response.success) {
-      //   alert("Story saved successfully!");
-      //   // Proceed to next step (e.g., generating images)
-      // } else {
-      //   alert("Failed to save story.");
-      // }
+      const updatedFormData = {
+        ...formData,
+        content,
+        isPublic // Include privacy setting
+      };
 
       const saveRes = await fetch("/api/story/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedFormData),
       });
-  
-      const saveResponse = await saveRes.json();
-      console.log("Story Saved:.........................", saveResponse);
-  
-      if (saveResponse.success) {
-        //alert("Story saved successfully!");
-        router?.replace('/view-story/'+saveResponse.story.id);
 
+      const saveResponse = await saveRes.json();
+      console.log("Story Saved:", saveResponse);
+
+      if (saveResponse.success) {
+        alert("Story created successfully!");
+        router?.replace('/view-story/'+saveResponse.story.id);
       } else {
         alert("Failed to save story.");
       }

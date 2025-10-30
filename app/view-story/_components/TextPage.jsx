@@ -1,7 +1,7 @@
 import React from "react";
 import { FaRegCirclePlay } from "react-icons/fa6";
 
-function TextPage({ chapterTitle, chapterContent }) {
+function TextPage({ chapterTitle, chapterContent, pageNumber }) {
     const playSpeech = (text) => {
         if (!text) return;
         const synth = window?.speechSynthesis;
@@ -38,6 +38,15 @@ function TextPage({ chapterTitle, chapterContent }) {
                     {chapterContent}
                 </p>
             </div>
+
+            {/* Page Number */}
+            {pageNumber !== undefined && (
+                <div className="absolute bottom-6 right-6">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-semibold bg-purple-100 dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg">
+                        Page {pageNumber + 1}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }

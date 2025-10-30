@@ -15,7 +15,7 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const { id: storyId } = params;
+    const { id: storyId } = await params;
     const { isPublic } = await request.json();
 
     if (typeof isPublic !== "boolean") {

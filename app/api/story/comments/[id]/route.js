@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function GET(request, { params }) {
   try {
-    const { id: storyId } = params;
+    const { id: storyId } = await params;
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get("sortBy") || "recent"; // recent, oldest, topRated
 

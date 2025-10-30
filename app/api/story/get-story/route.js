@@ -4,17 +4,23 @@ import { NextResponse } from "next/server";
 
 export async function GET(req) {
   try {
-    console.log("hittedddd....");
     const { searchParams } = new URL(req.url);
     const storyId = searchParams.get("id");
 
-    console.log(storyId,">>>>>");
     if (!storyId) {
       return NextResponse.json({ error: "Story ID is required" }, { status: 400 });
     }
 
     const story = await prisma.story.findUnique({
       where: { id: storyId },
+      include: {
+        images: {
+          orderBy: [
+            { isCover: 'desc' }, // Cover image first
+            { createdAt: 'asc' }  // Then chapters in order
+          ],
+        },
+      },
     });
 
     if (!story) {

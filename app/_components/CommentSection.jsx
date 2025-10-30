@@ -186,8 +186,8 @@ export default function CommentSection({ storyId }) {
 
           {/* Sort Options */}
           <div className="mb-4">
+            <div className="text-sm font-semibold mb-2 ml-1">Sort by:</div>
             <Select
-              label="Sort by"
               selectedKeys={[sortBy]}
               onChange={(e) => setSortBy(e.target.value)}
               className="max-w-xs"
@@ -211,7 +211,7 @@ export default function CommentSection({ storyId }) {
               <Spinner size="lg" />
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center text-sm py-8 text-gray-500">
               No comments yet. Be the first to share your thoughts!
             </div>
           ) : (

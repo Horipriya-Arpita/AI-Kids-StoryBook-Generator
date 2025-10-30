@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function POST(request, { params }) {
   try {
-    const { id: storyId } = params;
+    const { id: storyId } = await params;
 
     // Check if story exists
     const story = await prisma.story.findUnique({

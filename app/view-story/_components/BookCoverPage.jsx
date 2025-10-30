@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import React from 'react'
 
-function BookCoverPage({ imageUrl, title }) {
+function BookCoverPage({ imageUrl, title, pageNumber }) {
   return (
     <div className='relative w-full h-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 dark:from-purple-900 dark:via-pink-900 dark:to-blue-900 rounded-lg overflow-hidden shadow-2xl'>
       {imageUrl && (
@@ -26,10 +26,15 @@ function BookCoverPage({ imageUrl, title }) {
           </p>
         </div>
 
-        <div className='absolute bottom-10'>
+        <div className='absolute bottom-10 flex flex-col items-center gap-2'>
           <p className='text-white dark:text-gray-200 text-sm font-medium'>
             Open to begin your journey...
           </p>
+          {pageNumber !== undefined && (
+            <span className='text-white dark:text-gray-300 text-xs bg-black/20 dark:bg-white/10 px-3 py-1 rounded-full'>
+              Page {pageNumber + 1}
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -2,7 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import BookCoverPage from "../_components/BookCoverPage";
-import StoryPages from "../_components/StoryPages";
+import ImagePage from "../_components/ImagePage";
+import TextPage from "../_components/TextPage";
 import CommentSection from "@/app/_components/CommentSection";
 import { Button } from "@heroui/react";
 import { FaArrowAltCircleRight, FaArrowAltCircleLeft } from "react-icons/fa";
@@ -11,61 +12,120 @@ function ViewStory({ params }) {
   const bookRef = useRef();
   const [count, setCount] = useState(0);
   const [storyId, setStoryId] = useState(null);
+  const [storyData, setStoryData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Track view count when story loads
+  // Fetch story data when component mounts
   useEffect(() => {
-    const unwrapParams = async () => {
-      const resolvedParams = await params;
-      setStoryId(resolvedParams.id);
+    const fetchStoryData = async () => {
+      try {
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setStoryId(id);
 
-      // Track view for this story
-      if (resolvedParams.id) {
-        fetch(`/api/story/view/${resolvedParams.id}`, {
-          method: "POST",
-        }).catch((error) => console.error("Error tracking view:", error));
+        // Track view for this story
+        if (id) {
+          fetch(`/api/story/view/${id}`, {
+            method: "POST",
+          }).catch((error) => console.error("Error tracking view:", error));
+        }
+
+        // Fetch story content with images
+        const storyResponse = await fetch(`/api/story/get-story?id=${id}`);
+        const storyResult = await storyResponse.json();
+
+        if (!storyResult.success || !storyResult.story) {
+          throw new Error("Story not found");
+        }
+
+        const story = storyResult.story;
+
+        // Parse the story content (it's stored as JSON string or object)
+        let parsedContent;
+        if (typeof story.content === 'string') {
+          // Clean up the content string (remove markdown code blocks if present)
+          let cleanContent = story.content.trim();
+          if (cleanContent.startsWith('```json')) {
+            cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+          } else if (cleanContent.startsWith('```')) {
+            cleanContent = cleanContent.replace(/^```\s*/, '').replace(/```\s*$/, '');
+          }
+          parsedContent = JSON.parse(cleanContent);
+        } else {
+          parsedContent = story.content;
+        }
+
+        // Get images from the story (now included in the response)
+        const images = story.images || [];
+
+        // Get cover image
+        const coverImage = images.find(img => img.isCover)?.imageUrl ||
+                          "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=500&h=500&fit=crop";
+
+        // Map chapters with their images
+        const chapterImages = images.filter(img => !img.isCover);
+        const chapters = parsedContent.chapters?.map((chapter, index) => {
+          // Handle different possible field names for chapter content
+          const chapterContent = chapter.textContent || chapter.description || chapter.text || chapter.content || chapter.chapterText || "";
+
+          console.log(`Chapter ${index + 1} data:`, chapter);
+          console.log(`Chapter ${index + 1} content:`, chapterContent);
+
+          return {
+            title: `Chapter ${chapter.chapterNumber}: ${chapter.chapterTitle}`,
+            content: chapterContent,
+            image: chapterImages[index]?.imageUrl || "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=500&h=500&fit=crop"
+          };
+        }) || [];
+
+        setStoryData({
+          title: parsedContent.storyTitle || story.storySubject || "Untitled Story",
+          coverImage: coverImage,
+          chapters: chapters
+        });
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching story:", error);
+        setError(error.message);
+        setLoading(false);
       }
     };
 
-    unwrapParams();
+    fetchStoryData();
   }, [params]);
 
-  // Hardcoded story data for testing UI/UX
-  const storyData = {
-    title: "The Magic Garden Adventure",
-    coverImage: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=500&fit=crop",
-    chapters: [
-      {
-        title: "Chapter 1: The Discovery",
-        content: "Once upon a time, in a small village surrounded by hills, there lived a curious little girl named Luna. One sunny morning, while playing in her backyard, she discovered a tiny door hidden behind the rose bushes. The door was painted in rainbow colors and sparkled in the sunlight.",
-        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=500&fit=crop"
-      },
-      {
-        title: "Chapter 2: The Secret Path",
-        content: "Luna carefully opened the tiny door, and to her amazement, she began to shrink! Soon she was small enough to walk through. On the other side, she found a winding path lined with glowing flowers that chimed like bells when touched. The path led deeper into a magical garden.",
-        image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=500&h=500&fit=crop"
-      },
-      {
-        title: "Chapter 3: New Friends",
-        content: "As Luna walked along the path, she met a friendly talking butterfly named Shimmer. Shimmer had wings that changed colors with every flutter. 'Welcome to the Magic Garden!' said Shimmer. 'I've been waiting for someone brave enough to find this place.'",
-        image: "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=500&h=500&fit=crop"
-      },
-      {
-        title: "Chapter 4: The Crystal Fountain",
-        content: "Shimmer led Luna to a magnificent crystal fountain that sang beautiful melodies. The water sparkled with all the colors of the rainbow. 'This fountain grants one wish to every visitor,' explained Shimmer. Luna thought carefully about what she wanted most in the world.",
-        image: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=500&h=500&fit=crop"
-      },
-      {
-        title: "Chapter 5: The Wish",
-        content: "Luna made her wish - not for toys or sweets, but for the ability to share the magic of this garden with all the children in her village. The fountain glowed brightly, and Shimmer smiled. 'Your kind heart has made the garden even more magical,' said the butterfly.",
-        image: "https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?w=500&h=500&fit=crop"
-      },
-      {
-        title: "Chapter 6: Home Again",
-        content: "As the sun began to set, Luna knew it was time to return home. Shimmer gave her a magical seed. 'Plant this in your garden, and the door will always be here for you and your friends,' said Shimmer. Luna returned through the tiny door, growing back to her normal size, excited to share her adventure.",
-        image: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=500&h=500&fit=crop"
-      }
-    ]
-  };
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-10 md:px-20 lg:px-40 flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">Loading your story...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !storyData) {
+    return (
+      <div className="p-10 md:px-20 lg:px-40 flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-red-500 mb-4">Story Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-300">{error || "This story doesn't exist."}</p>
+          <Button
+            color="primary"
+            className="mt-6"
+            onClick={() => window.location.href = '/dashboard'}
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-10 md:px-20 lg:px-40 flex-col min-h-screen bg-gradient-to-b from-white to-purple-50 dark:from-gray-900 dark:to-gray-800">
@@ -82,17 +142,30 @@ function ViewStory({ params }) {
           useMouseEvents={false}
           ref={bookRef}
         >
-          {/* Cover Page */}
+          {/* Page 0: Cover Page */}
           <div>
-            <BookCoverPage imageUrl={storyData.coverImage} title={storyData.title} />
+            <BookCoverPage imageUrl={storyData.coverImage} title={storyData.title} pageNumber={0} />
           </div>
 
-          {/* Each chapter on one page with image left, text right */}
-          {storyData.chapters.map((chapter, index) => (
-            <div key={index}>
-              <StoryPages storyChapter={chapter} />
+          {/* Alternate between Image Page and Text Page for each chapter */}
+          {storyData.chapters.flatMap((chapter, index) => [
+            // Image page for this chapter
+            <div key={`image-${index}`}>
+              <ImagePage
+                imageUrl={chapter.image}
+                chapterTitle={chapter.title}
+                pageNumber={index * 2 + 1}
+              />
+            </div>,
+            // Text page for this chapter
+            <div key={`text-${index}`}>
+              <TextPage
+                chapterTitle={chapter.title}
+                chapterContent={chapter.content}
+                pageNumber={index * 2 + 2}
+              />
             </div>
-          ))}
+          ])}
         </HTMLFlipBook>
 
         {count != 0 && (
@@ -107,7 +180,7 @@ function ViewStory({ params }) {
           </div>
         )}
 
-        {count != storyData.chapters.length && (
+        {count != storyData.chapters.length * 2 && (
           <div
             className="absolute -right-5 top-[250px]"
             onClick={() => {
@@ -115,18 +188,13 @@ function ViewStory({ params }) {
               setCount(count + 1);
             }}
           >
-            
+
             <FaArrowAltCircleRight className="text-[50px] text-primary cursor-pointer hover:scale-110 transition-transform" />
           </div>
         )}
       </div>
 
-      <div className="text-center mt-8">
-        <p className="text-lg dark:text-white">
-          Page {count + 1} of {storyData.chapters.length + 1}
-        </p>
-      </div>
-
+      
       {/* Comments Section */}
       {storyId && (
         <div className="mt-16">

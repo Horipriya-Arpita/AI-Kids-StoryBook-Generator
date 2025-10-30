@@ -91,10 +91,17 @@ export default function StoryCard({ story }) {
           </div>
 
           {/* Like Button */}
-          <button
+          <div
             onClick={handleLike}
-            disabled={isLiking}
-            className="absolute bottom-2 right-2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg hover:scale-110 transition-transform disabled:opacity-50"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleLike(e);
+              }
+            }}
+            className={`absolute bottom-2 right-2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg hover:scale-110 transition-transform ${isLiking ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             aria-label={isLiked ? "Unlike story" : "Like story"}
           >
             {isLiked ? (
@@ -102,7 +109,7 @@ export default function StoryCard({ story }) {
             ) : (
               <FaRegHeart className="text-gray-600 dark:text-gray-300 text-xl" />
             )}
-          </button>
+          </div>
         </div>
 
         {/* Story Info */}
