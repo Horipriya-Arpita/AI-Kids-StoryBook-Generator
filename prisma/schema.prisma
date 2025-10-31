@@ -38,6 +38,7 @@ model Story {
   storyType    String
   ageGroup     String
   imageType    String
+  storyTitle   String? @db.VarChar(255) // Searchable title extracted from content
   content      Json    // JSON format of generated story
   createdAt    DateTime @default(now())
 
@@ -51,6 +52,18 @@ model Story {
   images       Image[]   @relation("StoryImages")
   likes        Like[]    @relation("StoryLikes")
   comments     Comment[] @relation("StoryComments")
+
+  // Single field indexes
+  @@index([isPublic])         // For public story filtering
+  @@index([createdAt])        // For recent sorting
+
+  // Composite indexes for common query combinations
+  @@index([isPublic, createdAt])      // Recent public stories
+  @@index([isPublic, likeCount])      // Popular public stories
+  @@index([isPublic, viewCount])      // Most viewed public stories
+  @@index([isPublic, storyType])      // Public stories by type
+  @@index([isPublic, ageGroup])       // Public stories by age
+  @@index([userId, createdAt])        // User's recent stories
 }
 
 model Image {

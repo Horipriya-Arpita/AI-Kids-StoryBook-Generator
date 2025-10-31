@@ -60,7 +60,7 @@ export async function GET(request) {
           ? {
               OR: [
                 { storySubject: { contains: search } },
-                { content: { string_contains: search } },
+                { storyTitle: { contains: search } },
               ],
             }
           : {},

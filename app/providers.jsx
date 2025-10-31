@@ -3,6 +3,7 @@ import {HeroUIProvider} from '@heroui/react'
 import { ClerkProvider } from '@clerk/nextjs'
 import Header from './_components/Header'
 import { ThemeProvider } from 'next-themes'
+import { Toaster } from 'react-hot-toast'
 
 export function Providers({children}) {
   return (
@@ -10,6 +11,7 @@ export function Providers({children}) {
     <ClerkProvider>
       <ThemeProvider attribute="class" defaultTheme="light">
       <HeroUIProvider>
+      <Toaster position="top-right" />
       <Header/>
       {children}
       </HeroUIProvider>

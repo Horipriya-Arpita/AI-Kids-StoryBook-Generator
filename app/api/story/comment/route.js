@@ -98,6 +98,7 @@ export async function POST(request) {
         user: {
           select: {
             id: true,
+            clerk_id: true,
             username: true,
             first_name: true,
             last_name: true,
@@ -130,6 +131,7 @@ export async function POST(request) {
       createdAt: comment.createdAt,
       author: {
         id: comment.user.id,
+        clerkId: comment.user.clerk_id,
         username: comment.user.username,
         firstName: comment.user.first_name,
         lastName: comment.user.last_name,

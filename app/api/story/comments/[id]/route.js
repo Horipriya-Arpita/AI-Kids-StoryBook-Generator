@@ -31,6 +31,7 @@ export async function GET(request, { params }) {
         user: {
           select: {
             id: true,
+            clerk_id: true,
             username: true,
             first_name: true,
             last_name: true,
@@ -50,6 +51,7 @@ export async function GET(request, { params }) {
       updatedAt: comment.updatedAt,
       author: {
         id: comment.user.id,
+        clerkId: comment.user.clerk_id,
         username: comment.user.username,
         firstName: comment.user.first_name,
         lastName: comment.user.last_name,

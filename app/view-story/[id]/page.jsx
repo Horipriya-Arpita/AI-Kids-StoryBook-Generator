@@ -5,16 +5,24 @@ import BookCoverPage from "../_components/BookCoverPage";
 import ImagePage from "../_components/ImagePage";
 import TextPage from "../_components/TextPage";
 import CommentSection from "@/app/_components/CommentSection";
-import { Button } from "@heroui/react";
-import { FaArrowAltCircleRight, FaArrowAltCircleLeft } from "react-icons/fa";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import { FaArrowAltCircleRight, FaArrowAltCircleLeft, FaEdit, FaTrash } from "react-icons/fa";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 function ViewStory({ params }) {
   const bookRef = useRef();
+  const router = useRouter();
+  const { user, isSignedIn } = useUser();
   const [count, setCount] = useState(0);
   const [storyId, setStoryId] = useState(null);
   const [storyData, setStoryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOwnStory, setIsOwnStory] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Fetch story data when component mounts
   useEffect(() => {
@@ -40,6 +48,11 @@ function ViewStory({ params }) {
         }
 
         const story = storyResult.story;
+
+        // Check if this is the user's own story
+        if (isSignedIn && user && story.user?.clerk_id === user.id) {
+          setIsOwnStory(true);
+        }
 
         // Parse the story content (it's stored as JSON string or object)
         let parsedContent;
@@ -94,7 +107,35 @@ function ViewStory({ params }) {
     };
 
     fetchStoryData();
-  }, [params]);
+  }, [params, isSignedIn, user]);
+
+  const handleEdit = () => {
+    router.push(`/edit-story/${storyId}`);
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/story/delete/${storyId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Story deleted successfully!");
+        onClose();
+        router.push("/dashboard");
+      } else {
+        toast.error(data.error || "Failed to delete story");
+      }
+    } catch (error) {
+      console.error("Error deleting story:", error);
+      toast.error("Failed to delete story");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -129,9 +170,29 @@ function ViewStory({ params }) {
 
   return (
     <div className="p-10 md:px-20 lg:px-40 flex-col min-h-screen bg-gradient-to-b from-white to-purple-50 dark:from-gray-900 dark:to-gray-800">
-      <h2 className="font-bold text-4xl text-center p-10 bg-primary text-white rounded-xl shadow-lg">
-        {storyData.title}
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="font-bold text-4xl text-center p-10 bg-primary text-white rounded-xl shadow-lg flex-1">
+          {storyData.title}
+        </h2>
+        {isOwnStory && (
+          <div className="flex gap-2 ml-4">
+            <Button
+              color="primary"
+              startContent={<FaEdit />}
+              onClick={handleEdit}
+            >
+              Edit
+            </Button>
+            <Button
+              color="danger"
+              startContent={<FaTrash />}
+              onClick={onOpen}
+            >
+              Delete
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="relative w-full flex justify-center">
         <HTMLFlipBook
@@ -201,6 +262,31 @@ function ViewStory({ params }) {
           <CommentSection storyId={storyId} />
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader>Delete Story</ModalHeader>
+          <ModalBody>
+            <p>Are you sure you want to delete this story? This action cannot be undone.</p>
+            <p className="text-sm text-gray-500 mt-2">
+              This will permanently delete the story, all its images, likes, and comments.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="default" variant="light" onPress={onClose}>
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              onPress={handleDelete}
+              isLoading={isDeleting}
+            >
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

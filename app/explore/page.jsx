@@ -119,6 +119,13 @@ export default function ExplorePage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleStoryDeleted = (deletedStoryId) => {
+    // Remove the deleted story from the list
+    setStories((prevStories) => prevStories.filter((story) => story.id !== deletedStoryId));
+    // Optionally refetch to get the correct page
+    fetchStories(pagination.page);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
 
@@ -194,7 +201,7 @@ export default function ExplorePage() {
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
                   {stories.map((story) => (
-                    <StoryCard key={story.id} story={story} />
+                    <StoryCard key={story.id} story={story} onStoryDeleted={handleStoryDeleted} />
                   ))}
                 </div>
 

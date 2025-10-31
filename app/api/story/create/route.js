@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma"; // Now it will work!
 import { content } from "@/tailwind.config";
-import { getDownloadURL, ref, uploadString } from "firebase/storage";
-import { storage } from "@/config/firebaseConfig";
 import axios from "axios";
 import { v4 as uuidv4 } from 'uuid';
-import { db } from "@/config/firebaseConfig"; 
-import { collection, addDoc, Timestamp } from "firebase/firestore"; 
 import cloudinary from "cloudinary";
 
 
@@ -58,6 +54,7 @@ export async function POST(req) {
         storyType,
         ageGroup,
         imageType,
+        storyTitle: parsedContent.storyTitle, // Extract title for searchability
         content, // JSON format of generated story
         isPublic, // Privacy setting
       },

@@ -20,6 +20,16 @@ export async function GET(req) {
             { createdAt: 'asc' }  // Then chapters in order
           ],
         },
+        user: {
+          select: {
+            id: true,
+            clerk_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+            profile_image: true,
+          },
+        },
       },
     });
 
