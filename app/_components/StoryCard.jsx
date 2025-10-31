@@ -50,6 +50,13 @@ export default function StoryCard({ story, onStoryDeleted }) {
     router.push(`/view-story/${story.id}`);
   };
 
+  const handleAuthorClick = (e) => {
+    e.stopPropagation();
+    if (story.author?.username) {
+      router.push(`/profile/${story.author.username}`);
+    }
+  };
+
   const handleEdit = (e) => {
     e.stopPropagation();
     router.push(`/edit-story/${story.id}`);
@@ -97,13 +104,11 @@ export default function StoryCard({ story, onStoryDeleted }) {
 
   return (
     <Card
-      isPressable
-      onPress={handleCardClick}
-      className="group hover:scale-105 transition-transform duration-300 cursor-pointer"
+      className="group hover:scale-105 transition-transform duration-300"
     >
       <CardBody className="p-0">
         {/* Cover Image */}
-        <div className="relative w-full h-64 overflow-hidden">
+        <div className="relative w-full h-64 overflow-hidden cursor-pointer" onClick={handleCardClick}>
           <img
             src={story.coverImage}
             alt={story.title}
@@ -181,22 +186,33 @@ export default function StoryCard({ story, onStoryDeleted }) {
 
         {/* Story Info */}
         <div className="p-4">
-          <h3 className="text-lg font-bold line-clamp-2 mb-2">{story.title}</h3>
+          <h3 className="text-lg font-bold line-clamp-2 mb-2 cursor-pointer" onClick={handleCardClick}>{story.title}</h3>
 
           {/* Author */}
-          <div className="mb-3">
+          <div
+            className={`mb-3 w-fit ${story.author?.username ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
+            onClick={story.author?.username ? handleAuthorClick : undefined}
+            role={story.author?.username ? "button" : undefined}
+            tabIndex={story.author?.username ? 0 : undefined}
+            onKeyDown={story.author?.username ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleAuthorClick(e);
+              }
+            } : undefined}
+          >
             <User
-              name={story.author.username || `${story.author.firstName} ${story.author.lastName}`}
+              name={story.author?.username || `${story.author?.firstName || ''} ${story.author?.lastName || ''}`.trim() || 'Anonymous'}
               description={story.storyType}
               avatarProps={{
-                src: story.author.profileImage,
+                src: story.author?.profileImage,
                 size: "sm",
               }}
             />
           </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 cursor-pointer" onClick={handleCardClick}>
             <div className="flex items-center gap-1">
               <FaHeart className="text-red-500" />
               <span>{likeCount}</span>

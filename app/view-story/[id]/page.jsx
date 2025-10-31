@@ -5,7 +5,7 @@ import BookCoverPage from "../_components/BookCoverPage";
 import ImagePage from "../_components/ImagePage";
 import TextPage from "../_components/TextPage";
 import CommentSection from "@/app/_components/CommentSection";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, User } from "@heroui/react";
 import { FaArrowAltCircleRight, FaArrowAltCircleLeft, FaEdit, FaTrash } from "react-icons/fa";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ function ViewStory({ params }) {
   const [count, setCount] = useState(0);
   const [storyId, setStoryId] = useState(null);
   const [storyData, setStoryData] = useState(null);
+  const [authorData, setAuthorData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isOwnStory, setIsOwnStory] = useState(false);
@@ -48,6 +49,16 @@ function ViewStory({ params }) {
         }
 
         const story = storyResult.story;
+
+        // Save author data
+        if (story.user) {
+          setAuthorData({
+            username: story.user.username,
+            firstName: story.user.first_name,
+            lastName: story.user.last_name,
+            profileImage: story.user.profile_image,
+          });
+        }
 
         // Check if this is the user's own story
         if (isSignedIn && user && story.user?.clerk_id === user.id) {
@@ -108,6 +119,12 @@ function ViewStory({ params }) {
 
     fetchStoryData();
   }, [params, isSignedIn, user]);
+
+  const handleAuthorClick = () => {
+    if (authorData?.username) {
+      router.push(`/profile/${authorData.username}`);
+    }
+  };
 
   const handleEdit = () => {
     router.push(`/edit-story/${storyId}`);
@@ -193,6 +210,33 @@ function ViewStory({ params }) {
           </div>
         )}
       </div>
+
+      {/* Author Info */}
+      {authorData && (
+        <div className="mb-6 flex justify-center">
+          <div
+            className={`bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md ${authorData.username ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
+            onClick={authorData.username ? handleAuthorClick : undefined}
+            role={authorData.username ? "button" : undefined}
+            tabIndex={authorData.username ? 0 : undefined}
+            onKeyDown={authorData.username ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleAuthorClick();
+              }
+            } : undefined}
+          >
+            <User
+              name={authorData.username || `${authorData.firstName || ''} ${authorData.lastName || ''}`.trim() || 'Anonymous'}
+              description="Story Author"
+              avatarProps={{
+                src: authorData.profileImage,
+                size: "md",
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="relative w-full flex justify-center">
         <HTMLFlipBook

@@ -41,6 +41,12 @@ export default function CommentSection({ storyId }) {
   const [commentToDelete, setCommentToDelete] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const handleAuthorClick = (username) => {
+    if (username) {
+      router.push(`/profile/${username}`);
+    }
+  };
+
   useEffect(() => {
     fetchComments();
   }, [storyId, sortBy]);
@@ -375,17 +381,31 @@ export default function CommentSection({ storyId }) {
                       <div className="flex items-start gap-3">
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <User
-                              name={
-                                comment.author.username ||
-                                `${comment.author.firstName} ${comment.author.lastName}`
-                              }
-                              description={formatDate(comment.createdAt)}
-                              avatarProps={{
-                                src: comment.author.profileImage,
-                                size: "sm",
-                              }}
-                            />
+                            <div
+                              className={comment.author?.username ? "cursor-pointer hover:opacity-70 transition-opacity" : ""}
+                              onClick={comment.author?.username ? () => handleAuthorClick(comment.author.username) : undefined}
+                              role={comment.author?.username ? "button" : undefined}
+                              tabIndex={comment.author?.username ? 0 : undefined}
+                              onKeyDown={comment.author?.username ? (e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleAuthorClick(comment.author.username);
+                                }
+                              } : undefined}
+                            >
+                              <User
+                                name={
+                                  comment.author?.username ||
+                                  `${comment.author?.firstName || ''} ${comment.author?.lastName || ''}`.trim() ||
+                                  'Anonymous'
+                                }
+                                description={formatDate(comment.createdAt)}
+                                avatarProps={{
+                                  src: comment.author?.profileImage,
+                                  size: "sm",
+                                }}
+                              />
+                            </div>
                             <div className="flex items-center gap-2">
                               {comment.rating && renderStars(comment.rating)}
                               {/* Edit/Delete buttons - only show for comment owner */}

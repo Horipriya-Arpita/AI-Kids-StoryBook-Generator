@@ -64,6 +64,8 @@ model Story {
   @@index([isPublic, storyType])      // Public stories by type
   @@index([isPublic, ageGroup])       // Public stories by age
   @@index([userId, createdAt])        // User's recent stories
+  @@index([userId, isPublic])         // User's public stories for profiles
+  @@index([userId, isPublic, createdAt]) // User's recent public stories
 }
 
 model Image {
