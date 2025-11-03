@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { Button } from '@heroui/react'
@@ -56,10 +55,6 @@ function DashboardHeader() {
                 <div className='flex items-center gap-4'>
                     <h2 className='font-bold text-3xl'>My Stories</h2>
                 </div>
-                <div className='flex gap-3 items-center'>
-                    <Image src={'/story.jpg'} alt='coin' width={50} height={50}/>
-                    <span className='text-2xl'>3 Credit Left </span>
-                </div>
             </div>
         );
     }
@@ -80,10 +75,6 @@ function DashboardHeader() {
                         View My Public Profile
                     </Button>
                 )}
-            </div>
-            <div className='flex gap-3 items-center'>
-                <Image src={'/story.jpg'} alt='coin' width={50} height={50}/>
-                <span className='text-2xl'>3 Credit Left </span>
             </div>
         </div>
     )
