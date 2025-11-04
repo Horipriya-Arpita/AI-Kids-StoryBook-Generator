@@ -4,6 +4,7 @@ import { content } from "@/tailwind.config";
 import axios from "axios";
 import { v4 as uuidv4 } from 'uuid';
 import cloudinary from "cloudinary";
+import { decrypt } from "@/lib/encryption";
 
 
 cloudinary.config({
@@ -22,14 +23,51 @@ export async function POST(req) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
 
-    // 🔹 Find internal user ID based on Clerk ID
+    // 🔹 Find internal user ID and check quota
     const user = await prisma.user.findUnique({
       where: { clerk_id: clerkId },
-      select: { id: true }, // Only fetch the internal ID
+      include: {
+        apiKeys: true, // Include API keys to check if user has custom keys
+      },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // 🔹 Check if user has custom API keys
+    const hasCustomKeys = !!(
+      user.apiKeys?.huggingFaceApiKey &&
+      user.apiKeys?.isActive
+    );
+
+    // 🔹 Check quota - only enforce if user doesn't have custom keys
+    if (!hasCustomKeys) {
+      if (user.freeStoriesUsed >= user.freeStoryLimit) {
+        return NextResponse.json(
+          {
+            error: "Free story limit reached",
+            message: `You've used all ${user.freeStoryLimit} free stories. Add your own API keys in Settings to create unlimited stories.`,
+            limitReached: true,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 🔹 Get the HuggingFace API key (user's or system)
+    let huggingFaceApiKey = process.env.HUGGING_FACE_API_KEY;
+    if (hasCustomKeys && user.apiKeys.huggingFaceApiKey) {
+      try {
+        huggingFaceApiKey = decrypt(user.apiKeys.huggingFaceApiKey);
+        console.log("✅ Using user's HuggingFace API key");
+      } catch (error) {
+        console.error("Failed to decrypt user's HuggingFace API key:", error);
+        // Fall back to system key
+        console.log("⚠️ Falling back to system HuggingFace API key");
+      }
+    } else {
+      console.log("Using system HuggingFace API key");
     }
 
     // Clean up the content string (remove markdown code blocks if present)
@@ -62,7 +100,7 @@ export async function POST(req) {
 
     //🔹 Generate and store the cover image
     const placeholderCoverImage = "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=800&h=600&fit=crop";
-    let coverImageUrl = await generateImageFromPrompt(coverImagePrompt);
+    let coverImageUrl = await generateImageFromPrompt(coverImagePrompt, 0, huggingFaceApiKey);
 
     // Use placeholder if generation fails
     if (!coverImageUrl) {
@@ -94,7 +132,7 @@ export async function POST(req) {
 
     for (let i = 0; i < chapterImagePrompts.length; i++) {
       const chapterPrompt = chapterImagePrompts[i];
-      let imageUrl = await generateImageFromPrompt(chapterPrompt);
+      let imageUrl = await generateImageFromPrompt(chapterPrompt, 0, huggingFaceApiKey);
 
       // Use placeholder if generation fails
       if (!imageUrl) {
@@ -113,14 +151,28 @@ export async function POST(req) {
       });
     }
 
+    // 🔹 Increment usage counter if using system keys
+    if (!hasCustomKeys) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          freeStoriesUsed: {
+            increment: 1,
+          },
+        },
+      });
+      console.log(`✅ User ${user.id} has now used ${user.freeStoriesUsed + 1}/${user.freeStoryLimit} free stories`);
+    }
+
     return NextResponse.json({ success: true, story: newStory }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-async function generateImageFromPrompt(prompt, retryCount = 0) {
-  const apiKey = process.env.HUGGING_FACE_API_KEY;
+async function generateImageFromPrompt(prompt, retryCount = 0, apiKey = null) {
+  // Use provided API key or fall back to system key
+  const huggingFaceApiKey = apiKey || process.env.HUGGING_FACE_API_KEY;
 
   // List of models to try (in order of preference)
   const models = [
@@ -138,10 +190,10 @@ async function generateImageFromPrompt(prompt, retryCount = 0) {
   try {
     console.log(`Attempting to generate image with model: ${model} (Attempt ${retryCount + 1})`);
 
-    const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+    const response = await fetch(`https://router.huggingface.co/hf-inference/models/${model}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${huggingFaceApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -156,7 +208,7 @@ async function generateImageFromPrompt(prompt, retryCount = 0) {
       if (errorData.error && errorData.error.includes("loading") && retryCount < maxRetries) {
         console.log(`Model loading, waiting ${waitTime/1000} seconds before retry...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
-        return generateImageFromPrompt(prompt, retryCount + 1);
+        return generateImageFromPrompt(prompt, retryCount + 1, apiKey);
       }
     }
 
@@ -167,7 +219,7 @@ async function generateImageFromPrompt(prompt, retryCount = 0) {
       // Try next model if available
       if (retryCount < models.length - 1) {
         console.log("Trying alternative model...");
-        return generateImageFromPrompt(prompt, retryCount + 1);
+        return generateImageFromPrompt(prompt, retryCount + 1, apiKey);
       }
 
       throw new Error(`Failed to generate image: ${response.status} - ${errorText}`);
@@ -206,7 +258,7 @@ async function generateImageFromPrompt(prompt, retryCount = 0) {
     // Retry with different model if we haven't exhausted all options
     if (retryCount < models.length - 1) {
       console.log("Retrying with alternative model...");
-      return generateImageFromPrompt(prompt, retryCount + 1);
+      return generateImageFromPrompt(prompt, retryCount + 1, apiKey);
     }
 
     // Return null after all retries exhausted

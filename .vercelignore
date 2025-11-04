@@ -1,0 +1,8 @@
+# Files to ignore during Vercel deployment
+.env*
+*.log
+node_modules
+.next
+out
+.DS_Store
+*.pem

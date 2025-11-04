@@ -37,10 +37,11 @@ function Header() {
         path: '/explore'
       },
 
-      {
-        name: 'Contact Us',
-        path: '/contact'
-      },
+      ...(isSignedIn ? [{
+        name: 'Settings',
+        path: '/settings'
+      }] : []),
+
     ]
 
     return (

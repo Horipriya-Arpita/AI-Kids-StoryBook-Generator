@@ -24,9 +24,14 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  stories       Story[]   @relation("UserStories")
-  likes         Like[]    @relation("UserLikes")
-  comments      Comment[] @relation("UserComments")
+  // API Usage Tracking
+  freeStoriesUsed Int @default(0)      // Number of free stories used
+  freeStoryLimit  Int @default(7)      // Free story limit per user (default: 7)
+
+  stories       Story[]      @relation("UserStories")
+  likes         Like[]       @relation("UserLikes")
+  comments      Comment[]    @relation("UserComments")
+  apiKeys       UserApiKeys? @relation("UserApiKeys")
 }
 
 
@@ -103,5 +108,23 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   @@index([storyId])
+  @@index([userId])
+}
+
+model UserApiKeys {
+  id        String   @id @default(uuid())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id], name: "UserApiKeys", onDelete: Cascade)
+
+  // Encrypted API keys (AES-256 encryption)
+  geminiApiKey       String? @db.Text  // Encrypted Gemini API key
+  huggingFaceApiKey  String? @db.Text  // Encrypted HuggingFace API key
+
+  // Metadata
+  isActive           Boolean  @default(true)
+  lastValidated      DateTime?         // Last time keys were validated
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
   @@index([userId])
 }
