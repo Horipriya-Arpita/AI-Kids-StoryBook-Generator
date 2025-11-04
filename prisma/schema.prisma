@@ -77,8 +77,8 @@ model Image {
   id        String  @id @default(uuid())
   storyId   String
   story     Story   @relation(fields: [storyId], references: [id], name: "StoryImages")
-  prompt    String
-  imageUrl  String
+  prompt    String  @db.Text
+  imageUrl  String  @db.Text
   isCover   Boolean @default(false) // To differentiate cover images
   createdAt DateTime @default(now())
 }
